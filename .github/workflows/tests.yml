@@ -1,0 +1,144 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: 3.7
+            torch: 1.11.0+cpu
+            torchvision: 0.12.0+cpu
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            onnx: True
+          - os: ubuntu-latest
+            python: 3.8
+            torch: 1.11.0+cpu
+            torchvision: 0.12.0+cpu
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            slow: True
+            onnx: True
+          - os: ubuntu-latest
+            python: 3.9
+            torch: 1.11.0+cpu
+            torchvision: 0.12.0+cpu
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            conda: True
+            onnx: True
+          - os: ubuntu-latest
+            python: '3.10'
+            torch: 1.11.0+cpu
+            torchvision: 0.12.0+cpu
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+          - os: macos-11
+            python: 3.7
+            torch: 1.11.0
+            torchvision: 0.12.0
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            onnx: True
+          - os: macos-11
+            python: 3.8
+            torch: 1.11.0
+            torchvision: 0.12.0
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            conda: True
+            onnx: True
+          - os: macos-11
+            python: 3.9
+            torch: 1.11.0
+            torchvision: 0.12.0
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            onnx: True
+          - os: windows-latest
+            python: 3.8
+            torch: 1.11.0+cpu
+            torchvision: 0.12.0+cpu
+            torch-source: https://download.pytorch.org/whl/torch_stable.html
+            slow: True
+            onnx: True
+
+    env:
+      DEBUG: 1
+      # DEVELOPER_DIR: /Applications/Xcode_12.4.app/Contents/Developer
+    steps:
+    - run: ls -n /Applications/ | grep Xcode*
+      if: matrix.os == 'macos-11'
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python ${{ matrix.python }}
+      if: ${{ !matrix.conda }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Set up Conda
+      if: matrix.conda
+      uses: s-weigand/setup-conda@v1
+      with:
+        update-conda: true
+        python-version: ${{ matrix.python }}
+        conda-channels: anaconda, conda-forge
+    - run: conda --version
+      if: matrix.conda
+    - run: which python
+      if: matrix.conda
+    - run: python --version
+    - name: Install pre-requisites
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        python -m pip install torch==${{ matrix.torch }} torchvision==${{ matrix.torchvision }} -f ${{ matrix.torch-source }}
+    - name: Install
+      run: python -m pip install -e ".[test]" --no-build-isolation
+    - name: Install for MacOSX - CoreML
+      if: matrix.os == 'macos-11'
+      run: python -m pip install -e ".[coreml]" --no-build-isolation
+    - name: Print environment
+      run: |
+        python -m pip freeze
+        python --version
+        python -c "import openpifpaf; print(openpifpaf.__version__)"
+        python -c "import openpifpaf_extras; print(openpifpaf_extras.__version__)"
+    - name: Lint
+      run: |
+        pylint openpifpaf_extras --disable=fixme
+    # - name: Lint tests
+    #   if: matrix.os != 'windows-latest'  # because of path separator
+    #   run: |
+    #     pylint tests/*.py --disable=fixme
+    - name: pycodestyle
+      if: matrix.os != 'windows-latest'  # because of path separator
+      run: |
+        python -m pycodestyle src/openpifpaf_extras
+    # - name: pycodestyle tests
+    #   if: matrix.os != 'windows-latest'  # because of path separator
+    #   run: |
+    #     python -m pycodestyle tests/*.py
+    # - name: Test
+    #   env:
+    #     PYTHONDEVMODE: 1
+    #   run: |
+    #     pytest -vv -m "not slow"
+
+    - name: generate sdist
+      run: python setup.py sdist
+    - name: sdist installable without build isolation
+      if: matrix.os != 'windows-latest'  # because of path separator
+      run: |
+        mkdir sdist_test_dir
+        cd sdist_test_dir
+        python -m pip uninstall -y openpifpaf_extras
+        python -m pip install --no-build-isolation ../dist/openpifpaf_extras*
+        python -c "import openpifpaf_extras"
+    - name: sdist installable with build isolation
+      if: matrix.os != 'windows-latest'  # because of path separator
+      run: |
+        mkdir sdist_with_build_isolation_test_dir
+        cd sdist_with_build_isolation_test_dir
+        python -m pip uninstall -y openpifpaf_extras
+        python -m pip install ../dist/openpifpaf_extras*
+        python -c "import openpifpaf_extras"

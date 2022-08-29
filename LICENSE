@@ -1,0 +1,5 @@
+Files with special licenses:
+- swin_transformer.py: docs/LICENSE.SWIN
+- xcit.py: docs/LICENSE.XCIT
+- effnetv2.py: docs/LICENSE.EFFNETV2
+- bottleneck_transformer.py: docs/LICENSE.BOTNET
