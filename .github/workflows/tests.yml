@@ -106,23 +106,23 @@ jobs:
     - name: Lint
       run: |
         pylint openpifpaf_extras --disable=fixme
-    # - name: Lint tests
-    #   if: matrix.os != 'windows-latest'  # because of path separator
-    #   run: |
-    #     pylint tests/*.py --disable=fixme
+    - name: Lint tests
+      if: matrix.os != 'windows-latest'  # because of path separator
+      run: |
+        pylint tests/*.py --disable=fixme
     - name: pycodestyle
       if: matrix.os != 'windows-latest'  # because of path separator
       run: |
         python -m pycodestyle src/openpifpaf_extras
-    # - name: pycodestyle tests
-    #   if: matrix.os != 'windows-latest'  # because of path separator
-    #   run: |
-    #     python -m pycodestyle tests/*.py
-    # - name: Test
-    #   env:
-    #     PYTHONDEVMODE: 1
-    #   run: |
-    #     pytest -vv -m "not slow"
+    - name: pycodestyle tests
+      if: matrix.os != 'windows-latest'  # because of path separator
+      run: |
+        python -m pycodestyle tests/*.py
+    - name: Test
+      env:
+        PYTHONDEVMODE: 1
+      run: |
+        pytest -vv
 
     - name: generate sdist
       run: python setup.py sdist
