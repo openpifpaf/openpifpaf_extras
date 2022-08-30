@@ -1,8 +1,9 @@
 """Extras for OpenPifPaf."""
 
 import logging
-import openpifpaf
 import sys
+
+import openpifpaf
 
 from . import _version
 __version__ = _version.get_versions()['version']
