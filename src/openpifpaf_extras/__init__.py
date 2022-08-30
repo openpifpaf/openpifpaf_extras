@@ -1,6 +1,8 @@
 """Extras for OpenPifPaf."""
 
+import logging
 import openpifpaf
+import sys
 
 from . import _version
 __version__ = _version.get_versions()['version']
@@ -8,6 +10,8 @@ __version__ = _version.get_versions()['version']
 from .network import basenetworks
 from .network import swin_transformer
 from .network import xcit
+
+LOG = logging.getLogger(__name__)
 
 
 def register():
@@ -148,6 +152,11 @@ def register():
                                                      stride=16)
     openpifpaf.BASE_FACTORIES['botnet'] = lambda: basenetworks.BotNet('botnet')
 
+    # monkey patch for checkpoint compatibility
+    openpifpaf.network.basenetworks.SwinTransformer = basenetworks.SwinTransformer
+    openpifpaf.network.basenetworks.FPN = basenetworks.FPN
+    sys.modules["openpifpaf.network.swin_transformer"] = swin_transformer
+    LOG.info("monkey patches applied for swin_transformer")
     openpifpaf.CHECKPOINT_URLS['swin_s'] = (
         'http://github.com/dmizr/openpifpaf/releases/download/'
         'v0.12.14/swin_s_fpn_lvl_3_lr_5e-5_resumed-d286d41a.pkl')
