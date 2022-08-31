@@ -30,7 +30,7 @@ setuptools.setup(
     install_requires=[
         'timm>=0.4.9,<0.5',  # For Swin Transformer and XCiT
         'einops>=0.3',  # required for BotNet
-        'openpifpaf>=0.13.4',
+        'openpifpaf>=0.13.5',
     ],
     extras_require={
         'dev': [
